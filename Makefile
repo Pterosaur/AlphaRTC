@@ -27,9 +27,23 @@ sync:
 		output_dir=$(output_dir) \
 		gn_flags=$(gn_flags)
 
-app: peerconnection_serverless
+app: peerconnection_serverless peerconnection_server peerconnection_client
 
 peerconnection_serverless:
+	docker run $(docker_flags) $(compile_docker) \
+		make docker-$@ \
+		output_dir=$(output_dir) \
+		target_lib_dir=$(target_lib_dir) \
+		target_bin_dir=$(target_bin_dir)
+
+peerconnection_server:
+	docker run $(docker_flags) $(compile_docker) \
+		make docker-$@ \
+		output_dir=$(output_dir) \
+		target_lib_dir=$(target_lib_dir) \
+		target_bin_dir=$(target_bin_dir)
+
+peerconnection_client:
 	docker run $(docker_flags) $(compile_docker) \
 		make docker-$@ \
 		output_dir=$(output_dir) \
@@ -44,7 +58,7 @@ docker-sync:
 	rm -rf src
 	gn gen $(output_dir) $(gn_flags)
 
-docker-app: docker-peerconnection_serverless
+docker-app: docker-peerconnection_serverless peerconnection_server peerconnection_client
 
 docker-peerconnection_serverless:
 	ninja -C $(output_dir) peerconnection_serverless
@@ -53,3 +67,14 @@ docker-peerconnection_serverless:
 	cp modules/third_party/onnxinfer/lib/*.so.* $(target_lib_dir)
 	mkdir -p $(target_bin_dir)
 	cp $(output_dir)/peerconnection_serverless $(target_bin_dir)
+
+docker-peerconnection_server:
+	ninja -C $(output_dir) peerconnection_server
+	mkdir -p $(target_bin_dir)
+	cp $(output_dir)/peerconnection_server $(target_bin_dir)
+
+docker-peerconnection_client:
+	ninja -C $(output_dir) peerconnection_client
+	mkdir -p $(target_bin_dir)
+	cp $(output_dir)/peerconnection_client $(target_bin_dir)
+
